@@ -11,20 +11,16 @@
         android:layout_height="wrap_content"
         android:text="@string/create_playlist_title"
         android:textSize="24sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:textColor="#000000" />
 
-    <com.google.android.material.textfield.TextInputLayout
+    <EditText
+        android:id="@+id/edit_playlist_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/edit_playlist_name"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/playlist_name_hint" />
-
-    </com.google.android.material.textfield.TextInputLayout>
+        android:layout_marginTop="32dp"
+        android:hint="@string/playlist_name_hint"
+        android:inputType="text" />
 
     <Button
         android:id="@+id/btn_create_playlist"

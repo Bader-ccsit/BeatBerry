@@ -26,16 +26,20 @@ class MusicService : Service(), MediaPlayer.OnPreparedListener, MediaPlayer.OnEr
         songPos = 0
         initMusicPlayer()
         
-        mediaSession = MediaSessionCompat(this, "MusicService").apply {
-            setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS or MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS)
-            setCallback(object : MediaSessionCompat.Callback() {
-                override fun onPlay() { go() }
-                override fun onPause() { pausePlayer() }
-                override fun onSkipToNext() { playNext() }
-                override fun onSkipToPrevious() { playPrev() }
-                override fun onSeekTo(pos: Long) { seek(pos.toInt()) }
-            })
-            isActive = true
+        try {
+            mediaSession = MediaSessionCompat(this, "MusicService").apply {
+                setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS or MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS)
+                setCallback(object : MediaSessionCompat.Callback() {
+                    override fun onPlay() { go() }
+                    override fun onPause() { pausePlayer() }
+                    override fun onSkipToNext() { playNext() }
+                    override fun onSkipToPrevious() { playPrev() }
+                    override fun onSeekTo(pos: Long) { seek(pos.toInt()) }
+                })
+                isActive = true
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
@@ -58,6 +62,10 @@ class MusicService : Service(), MediaPlayer.OnPreparedListener, MediaPlayer.OnEr
             setOnCompletionListener(this@MusicService)
             setOnErrorListener(this@MusicService)
         }
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        return START_STICKY
     }
 
     fun setList(theSongs: List<Song>) {

@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace = "com.example.bb10_musicplayer"
-    compileSdk = 35
+    compileSdk = 31
 
     defaultConfig {
         applicationId = "com.example.bb10_musicplayer"
-        minSdk = 16
-        targetSdk = 35
+        minSdk = 18
+        targetSdk = 22
         versionCode = 1
         versionName = "1.0"
 
@@ -33,16 +33,24 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+
+    applicationVariants.all {
+        outputs.all {
+            val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+            output.outputFileName = "BB10-musicplayer.apk"
+        }
+    }
 }
 
 dependencies {
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("com.google.android.material:material:1.10.0")
-    implementation("androidx.recyclerview:recyclerview:1.3.2")
-    implementation("androidx.drawerlayout:drawerlayout:1.2.0")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-    implementation("androidx.media:media:1.6.0")
+    implementation("androidx.appcompat:appcompat:1.2.0")
+    implementation("com.google.android.material:material:1.2.1")
+    implementation("androidx.recyclerview:recyclerview:1.1.0")
+    implementation("androidx.drawerlayout:drawerlayout:1.1.1")
+    implementation("androidx.constraintlayout:constraintlayout:1.1.3")
+    implementation("androidx.media:media:1.2.1")
+    
     testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+    androidTestImplementation("androidx.test.ext:junit:1.1.2")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.3.0")
 }
