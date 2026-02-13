@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">مشغل موسيقى BB10</string>
+    <string name="no_music">لا توجد موسيقى</string>
+    <string name="menu_create_playlist">إنشاء قائمة تشغيل</string>
+    <string name="menu_view_playlists">عرض جميع قوائم التشغيل</string>
+    <string name="menu_rescan">إعادة فحص الموسيقى</string>
+    <string name="menu_settings">الإعدادات</string>
+    <string name="menu_about">حول التطبيق</string>
+    <string name="settings_dark_mode">الوضع الداكن</string>
+    <string name="settings_language">اللغة</string>
+    <string name="settings_clear_cache">مسح ذاكرة التخزين المؤقت</string>
+    <string name="about_made_by">صنع بكل حب بواسطة م.بدر/ميهاوك</string>
+    <string name="about_version">الإصدار 1.0</string>
+    <string name="rescan_message">جاري البحث عن موسيقى...</string>
+    <string name="btn_start_scanning">بدء الفحص</string>
+    <string name="btn_manual_add">إضافة يدوياً</string>
+    <string name="playlist_name_hint">أدخل اسم قائمة التشغيل</string>
+    <string name="btn_create">إنشاء</string>
+    <string name="rescan_title">إعادة فحص الموسيقى</string>
+    <string name="create_playlist_title">إنشاء قائمة تشغيل جديدة</string>
+</resources>

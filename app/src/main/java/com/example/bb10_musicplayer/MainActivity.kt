@@ -1,0 +1,299 @@
+package com.example.bb10_musicplayer
+
+import android.Manifest
+import android.app.AlertDialog
+import android.content.*
+import android.content.pm.PackageManager
+import android.content.res.Configuration
+import android.database.Cursor
+import android.net.Uri
+import android.os.*
+import android.provider.MediaStore
+import android.view.MenuItem
+import android.view.View
+import android.widget.*
+import androidx.appcompat.app.ActionBarDrawerToggle
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.appcompat.widget.Toolbar
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.core.view.GravityCompat
+import androidx.drawerlayout.widget.DrawerLayout
+import androidx.fragment.app.Fragment
+import com.google.android.material.navigation.NavigationView
+import java.io.File
+import java.util.Locale
+
+class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
+
+    private var musicService: MusicService? = null
+    private var playIntent: Intent? = null
+    private var musicBound = false
+    private var songList = mutableListOf<Song>()
+    private lateinit var seekBar: SeekBar
+    private lateinit var btnPlayPause: ImageButton
+    private val handler = Handler(Looper.getMainLooper())
+    private var currentFragment: Fragment? = null
+
+    private val musicConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName, service: IBinder) {
+            val binder = service as MusicService.MusicBinder
+            musicService = binder.getService()
+            musicService?.setList(songList)
+            musicBound = true
+            updateHomeFragment()
+        }
+
+        override fun onServiceDisconnected(name: ComponentName) {
+            musicBound = false
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        applySettings()
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        val toolbar: Toolbar = findViewById(R.id.toolbar)
+        setSupportActionBar(toolbar)
+
+        val drawer: DrawerLayout = findViewById(R.id.drawer_layout)
+        val toggle = ActionBarDrawerToggle(
+            this, drawer, toolbar, R.string.app_name, R.string.app_name
+        )
+        drawer.addDrawerListener(toggle)
+        toggle.syncState()
+
+        val navigationView: NavigationView = findViewById(R.id.nav_view)
+        navigationView.setNavigationItemSelectedListener(this)
+
+        seekBar = findViewById(R.id.seek_bar)
+        btnPlayPause = findViewById(R.id.btn_play_pause)
+        val btnPrev: ImageButton = findViewById(R.id.btn_prev)
+        val btnNext: ImageButton = findViewById(R.id.btn_next)
+
+        btnPlayPause.setOnClickListener {
+            if (musicService?.isPng() == true) {
+                musicService?.pausePlayer()
+                btnPlayPause.setImageResource(android.R.drawable.ic_media_play)
+            } else {
+                musicService?.go()
+                btnPlayPause.setImageResource(android.R.drawable.ic_media_pause)
+            }
+        }
+
+        btnPrev.setOnClickListener { musicService?.playPrev() }
+        btnNext.setOnClickListener { musicService?.playNext() }
+
+        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (fromUser) musicService?.seek(progress)
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+
+        if (savedInstanceState == null) {
+            showFragment(HomeFragment(), "HOME")
+        }
+
+        checkPermissions()
+        startSeekBarUpdate()
+    }
+
+    private fun showFragment(fragment: Fragment, tag: String) {
+        currentFragment = fragment
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, fragment, tag)
+            .commit()
+    }
+
+    private fun updateHomeFragment() {
+        val homeFragment = supportFragmentManager.findFragmentByTag("HOME") as? HomeFragment
+        homeFragment?.setSongs(songList) { position ->
+            playSong(position)
+        }
+    }
+
+    fun playSong(position: Int) {
+        musicService?.setSong(position)
+        musicService?.playSong()
+        btnPlayPause.setImageResource(android.R.drawable.ic_media_pause)
+    }
+
+    fun showPlaylistSongs(playlist: Playlist) {
+        val fragment = PlaylistSongsFragment.newInstance(playlist)
+        showFragment(fragment, "PLAYLIST_SONGS")
+    }
+
+    private fun applySettings() {
+        val prefs = getSharedPreferences("settings", Context.MODE_PRIVATE)
+        val isDarkMode = prefs.getBoolean("dark_mode", false)
+        AppCompatDelegate.setDefaultNightMode(
+            if (isDarkMode) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
+        )
+
+        val lang = prefs.getString("lang", "en") ?: "en"
+        val locale = Locale(lang)
+        Locale.setDefault(locale)
+        val config = Configuration()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            config.setLocale(locale)
+        } else {
+            @Suppress("DEPRECATION")
+            config.locale = locale
+        }
+        @Suppress("DEPRECATION")
+        baseContext.resources.updateConfiguration(config, baseContext.resources.displayMetrics)
+    }
+
+    private fun checkPermissions() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+            != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 1)
+        } else {
+            getSongList()
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 1 && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            getSongList()
+        }
+    }
+
+    private fun getSongList() {
+        songList.clear()
+        val musicResolver: ContentResolver = contentResolver
+        val musicUri: Uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+        val musicCursor: Cursor? = musicResolver.query(musicUri, null, null, null, null)
+
+        if (musicCursor != null && musicCursor.moveToFirst()) {
+            val titleColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.TITLE)
+            val idColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media._ID)
+            val artistColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.ARTIST)
+            val pathColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DATA)
+            val durationColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DURATION)
+            val albumIdColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID)
+
+            do {
+                val thisId = musicCursor.getLong(idColumn)
+                val thisTitle = musicCursor.getString(titleColumn)
+                val thisArtist = musicCursor.getString(artistColumn)
+                val thisPath = musicCursor.getString(pathColumn)
+                val thisDuration = musicCursor.getLong(durationColumn)
+                val thisAlbumId = musicCursor.getLong(albumIdColumn)
+                songList.add(Song(thisId, thisTitle, thisArtist, thisPath, thisDuration, thisAlbumId))
+            } while (musicCursor.moveToNext())
+        }
+        musicCursor?.close()
+        updateHomeFragment()
+    }
+
+    fun getAllSongs(): List<Song> = songList
+
+    override fun onStart() {
+        super.onStart()
+        if (playIntent == null) {
+            playIntent = Intent(this, MusicService::class.java)
+            bindService(playIntent!!, musicConnection, Context.BIND_AUTO_CREATE)
+            startService(playIntent)
+        }
+    }
+
+    override fun onNavigationItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.nav_create_playlist -> showFragment(CreatePlaylistFragment(), "CREATE_PLAYLIST")
+            R.id.nav_view_playlists -> showFragment(PlaylistsFragment(), "PLAYLISTS")
+            R.id.nav_rescan -> showFragment(RescanFragment(), "RESCAN")
+            R.id.nav_settings -> showFragment(SettingsFragment(), "SETTINGS")
+            R.id.nav_about -> showFragment(AboutFragment(), "ABOUT")
+            else -> showFragment(HomeFragment(), "HOME")
+        }
+        val drawer: DrawerLayout = findViewById(R.id.drawer_layout)
+        drawer.closeDrawer(GravityCompat.START)
+        return true
+    }
+
+    private fun startSeekBarUpdate() {
+        handler.postDelayed(object : Runnable {
+            override fun run() {
+                musicService?.let {
+                    if (it.isPng()) {
+                        seekBar.max = it.getDur()
+                        seekBar.progress = it.getPosn()
+                    }
+                }
+                handler.postDelayed(this, 1000)
+            }
+        }, 1000)
+    }
+
+    fun showSongOptions(song: Song) {
+        val options = arrayOf("Rename song", "Change song image", "Add to playlist", "Add to favorite", "Delete song")
+        AlertDialog.Builder(this)
+            .setTitle(song.title)
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> renameSong(song)
+                    1 -> Toast.makeText(this, "Change image not implemented", Toast.LENGTH_SHORT).show()
+                    2 -> Toast.makeText(this, "Add to playlist not implemented", Toast.LENGTH_SHORT).show()
+                    3 -> Toast.makeText(this, "Added to favorites", Toast.LENGTH_SHORT).show()
+                    4 -> deleteSong(song)
+                }
+            }
+            .show()
+    }
+
+    private fun renameSong(song: Song) {
+        val input = EditText(this)
+        val file = File(song.path)
+        input.setText(file.name)
+        AlertDialog.Builder(this)
+            .setTitle("Rename Song File")
+            .setView(input)
+            .setPositiveButton("OK") { _, _ ->
+                val newName = input.text.toString()
+                if (newName.isNotEmpty()) {
+                    val newFile = File(file.parent, newName)
+                    if (file.renameTo(newFile)) {
+                        Toast.makeText(this, "Renamed to $newName", Toast.LENGTH_SHORT).show()
+                        getSongList()
+                    } else {
+                        Toast.makeText(this, "Failed to rename", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun deleteSong(song: Song) {
+        AlertDialog.Builder(this)
+            .setTitle("Delete Song")
+            .setMessage("Are you sure you want to delete ${song.title}?")
+            .setPositiveButton("Delete") { _, _ ->
+                val file = File(song.path)
+                if (file.delete()) {
+                    Toast.makeText(this, "Deleted", Toast.LENGTH_SHORT).show()
+                    getSongList()
+                } else {
+                    Toast.makeText(this, "Failed to delete", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    override fun onDestroy() {
+        if (musicBound) {
+            unbindService(musicConnection)
+            musicBound = false
+        }
+        stopService(playIntent)
+        musicService = null
+        super.onDestroy()
+    }
+}

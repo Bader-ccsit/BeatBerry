@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_create_playlist"
+            android:icon="@android:drawable/ic_menu_add"
+            android:title="@string/menu_create_playlist" />
+        <item
+            android:id="@+id/nav_view_playlists"
+            android:icon="@android:drawable/ic_menu_agenda"
+            android:title="@string/menu_view_playlists" />
+        <item
+            android:id="@+id/nav_rescan"
+            android:icon="@android:drawable/ic_menu_rotate"
+            android:title="@string/menu_rescan" />
+        <item
+            android:id="@+id/nav_settings"
+            android:icon="@android:drawable/ic_menu_preferences"
+            android:title="@string/menu_settings" />
+        <item
+            android:id="@+id/nav_about"
+            android:icon="@android:drawable/ic_menu_info_details"
+            android:title="@string/menu_about" />
+    </group>
+</menu>
