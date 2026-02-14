@@ -27,6 +27,7 @@ import androidx.fragment.app.Fragment
 import com.google.android.material.navigation.NavigationView
 import java.io.File
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
@@ -36,6 +37,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private var songList = mutableListOf<Song>()
     private var playlists = mutableListOf<Playlist>()
     private lateinit var seekBar: SeekBar
+    private lateinit var txtCurrentTime: TextView
+    private lateinit var txtTotalDuration: TextView
     private lateinit var btnPlayPause: ImageButton
     private val handler = Handler(Looper.getMainLooper())
     private var currentFragment: Fragment? = null
@@ -79,6 +82,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         navigationView.setNavigationItemSelectedListener(this)
 
         seekBar = findViewById(R.id.seek_bar)
+        txtCurrentTime = findViewById(R.id.txt_current_time)
+        txtTotalDuration = findViewById(R.id.txt_total_duration)
         btnPlayPause = findViewById(R.id.btn_play_pause)
         val btnPrev: ImageButton = findViewById(R.id.btn_prev)
         val btnNext: ImageButton = findViewById(R.id.btn_next)
@@ -102,7 +107,10 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                if (fromUser) musicService?.seek(progress)
+                if (fromUser) {
+                    musicService?.seek(progress)
+                    txtCurrentTime.text = formatTime(progress.toLong())
+                }
             }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
@@ -159,12 +167,19 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         val fragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
         val tag = fragment?.tag
-        if (tag == "HOME") {
-            menuInflater.inflate(R.menu.home_options, menu)
-            return true
-        } else if (tag == "PLAYLISTS") {
-            menuInflater.inflate(R.menu.playlists_options, menu)
-            return true
+        when (tag) {
+            "HOME" -> {
+                menuInflater.inflate(R.menu.home_options, menu)
+                return true
+            }
+            "PLAYLISTS" -> {
+                menuInflater.inflate(R.menu.playlists_options, menu)
+                return true
+            }
+            "PLAYLIST_SONGS" -> {
+                menuInflater.inflate(R.menu.playlist_songs_options, menu)
+                return true
+            }
         }
         return super.onCreateOptionsMenu(menu)
     }
@@ -172,8 +187,12 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val fragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
         when (item.itemId) {
-            R.id.action_search_songs, R.id.action_search_playlists -> {
+            R.id.action_search_songs, R.id.action_search_playlists, R.id.action_search_playlist_songs -> {
                 showSearchBar()
+                return true
+            }
+            R.id.action_rearrange_playlist -> {
+                (fragment as? PlaylistSongsFragment)?.enableRearrange()
                 return true
             }
             R.id.sort_name_asc -> (fragment as? Sortable)?.sortByName(true)
@@ -349,13 +368,24 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             override fun run() {
                 musicService?.let {
                     if (it.isPng()) {
-                        seekBar.max = it.getDur()
-                        seekBar.progress = it.getPosn()
+                        val pos = it.getPosn()
+                        val dur = it.getDur()
+                        seekBar.max = dur
+                        seekBar.progress = pos
+                        txtCurrentTime.text = formatTime(pos.toLong())
+                        txtTotalDuration.text = formatTime(dur.toLong())
                     }
                 }
                 handler.postDelayed(this, 1000)
             }
         }, 1000)
+    }
+
+    private fun formatTime(millis: Long): String {
+        return String.format(Locale.getDefault(), "%02d:%02d",
+            TimeUnit.MILLISECONDS.toMinutes(millis),
+            TimeUnit.MILLISECONDS.toSeconds(millis) % TimeUnit.MINUTES.toSeconds(1)
+        )
     }
 
     fun showSongOptions(song: Song) {

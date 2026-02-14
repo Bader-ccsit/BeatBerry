@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_search_playlist_songs"
+        android:title="Search for music"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_rearrange_playlist"
+        android:title="Re-arange the music"
+        app:showAsAction="never" />
+</menu>
