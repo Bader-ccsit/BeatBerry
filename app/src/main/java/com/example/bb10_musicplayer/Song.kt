@@ -8,7 +8,8 @@ data class Song(
     val artist: String,
     val path: String,
     val duration: Long,
-    val albumId: Long
+    val albumId: Long,
+    val dateAdded: Long = 0
 ) {
     val uri: Uri get() = Uri.withAppendedPath(
         android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,

@@ -17,10 +17,13 @@ class CreatePlaylistFragment : Fragment() {
         val btnCreate: Button = view.findViewById(R.id.btn_create_playlist)
 
         btnCreate.setOnClickListener {
-            val name = editName.text.toString()
+            val name = editName.text.toString().trim()
             if (name.isNotEmpty()) {
-                Toast.makeText(context, "Playlist '$name' created", Toast.LENGTH_SHORT).show()
-                // Optionally navigate back to HomeFragment here
+                (activity as? MainActivity)?.let { main ->
+                    main.createPlaylist(name)
+                    Toast.makeText(context, "Playlist '$name' created", Toast.LENGTH_SHORT).show()
+                    main.switchToPlaylists()
+                }
             } else {
                 Toast.makeText(context, "Please enter a name", Toast.LENGTH_SHORT).show()
             }

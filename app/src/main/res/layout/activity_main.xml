@@ -25,6 +25,32 @@
                 app:title="@string/app_name"
                 app:popupTheme="@style/Theme.BB10MusicPlayer.PopupOverlay" />
 
+            <RelativeLayout
+                android:id="@+id/search_bar_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#FFFFFF"
+                android:padding="4dp"
+                android:visibility="gone">
+
+                <EditText
+                    android:id="@+id/edit_search"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_toLeftOf="@+id/btn_close_search"
+                    android:hint="Search..."
+                    android:inputType="text"
+                    android:padding="8dp" />
+
+                <ImageButton
+                    android:id="@+id/btn_close_search"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_alignParentRight="true"
+                    android:background="?attr/selectableItemBackground"
+                    android:src="@android:drawable/ic_menu_close_clear_cancel" />
+            </RelativeLayout>
+
         </com.google.android.material.appbar.AppBarLayout>
 
         <RelativeLayout

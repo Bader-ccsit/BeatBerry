@@ -1,32 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center_horizontal"
-    android:orientation="vertical"
-    android:padding="24dp">
+    android:fillViewport="true"
+    android:background="#FFFFFF">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/create_playlist_title"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:textColor="#000000" />
-
-    <EditText
-        android:id="@+id/edit_playlist_name"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
-        android:hint="@string/playlist_name_hint"
-        android:inputType="text" />
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:padding="24dp">
 
-    <Button
-        android:id="@+id/btn_create_playlist"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="@string/btn_create" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/create_playlist_title"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="#000000" />
 
-</LinearLayout>
+        <EditText
+            android:id="@+id/edit_playlist_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:hint="@string/playlist_name_hint"
+            android:inputType="textCapWords"
+            android:imeOptions="actionDone" />
+
+        <Button
+            android:id="@+id/btn_create_playlist"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:layout_marginBottom="32dp"
+            android:text="@string/btn_create"
+            android:backgroundTint="#6200EE"
+            android:textColor="#FFFFFF" />
+
+    </LinearLayout>
+</ScrollView>

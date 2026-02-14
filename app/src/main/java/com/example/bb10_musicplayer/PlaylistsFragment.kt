@@ -11,30 +11,25 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import java.util.Locale
 
-class PlaylistsFragment : Fragment() {
+class PlaylistsFragment : Fragment(), Searchable, Sortable {
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: PlaylistAdapter
     private lateinit var noPlaylistsView: TextView
-    private var playlists = mutableListOf<Playlist>()
+    private var displayedPlaylists = mutableListOf<Playlist>()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val view = inflater.inflate(R.layout.fragment_playlists, container, false)
         recyclerView = view.findViewById(R.id.playlist_list)
         noPlaylistsView = view.findViewById(R.id.no_playlists_view)
 
-        // Mock data for now, in a real app this would come from a database or shared preferences
-        if (playlists.isEmpty()) {
-            playlists.add(Playlist(1, "Hello", mutableListOf()))
-            playlists.add(Playlist(2, "Favorites", mutableListOf()))
-        }
+        updateDisplayedList()
 
-        adapter = PlaylistAdapter(playlists, { playlist ->
-            // Click to enter playlist
+        adapter = PlaylistAdapter(displayedPlaylists, { playlist ->
             (activity as? MainActivity)?.showPlaylistSongs(playlist)
         }, { playlist ->
-            // Long click for options
             showPlaylistOptions(playlist)
         })
 
@@ -45,14 +40,55 @@ class PlaylistsFragment : Fragment() {
         return view
     }
 
+    private fun updateDisplayedList() {
+        val allPlaylists = (activity as? MainActivity)?.getPlaylists() ?: mutableListOf()
+        displayedPlaylists.clear()
+        displayedPlaylists.addAll(allPlaylists)
+    }
+
     private fun updateUI() {
-        if (playlists.isEmpty()) {
+        if (displayedPlaylists.isEmpty()) {
             noPlaylistsView.visibility = View.VISIBLE
             recyclerView.visibility = View.GONE
         } else {
             noPlaylistsView.visibility = View.GONE
             recyclerView.visibility = View.VISIBLE
         }
+    }
+
+    override fun filter(query: String) {
+        val allPlaylists = (activity as? MainActivity)?.getPlaylists() ?: mutableListOf()
+        val lowerCaseQuery = query.toLowerCase(Locale.getDefault())
+        displayedPlaylists.clear()
+        if (lowerCaseQuery.isEmpty()) {
+            displayedPlaylists.addAll(allPlaylists)
+        } else {
+            for (playlist in allPlaylists) {
+                if (playlist.name.toLowerCase(Locale.getDefault()).contains(lowerCaseQuery)) {
+                    displayedPlaylists.add(playlist)
+                }
+            }
+        }
+        adapter.notifyDataSetChanged()
+        updateUI()
+    }
+
+    override fun sortByName(ascending: Boolean) {
+        if (ascending) {
+            displayedPlaylists.sortBy { it.name.toLowerCase(Locale.getDefault()) }
+        } else {
+            displayedPlaylists.sortByDescending { it.name.toLowerCase(Locale.getDefault()) }
+        }
+        adapter.notifyDataSetChanged()
+    }
+
+    override fun sortByDate(newestFirst: Boolean) {
+        if (newestFirst) {
+            displayedPlaylists.sortByDescending { it.dateCreated }
+        } else {
+            displayedPlaylists.sortBy { it.dateCreated }
+        }
+        adapter.notifyDataSetChanged()
     }
 
     private fun showPlaylistOptions(playlist: Playlist) {
@@ -70,8 +106,9 @@ class PlaylistsFragment : Fragment() {
     }
 
     private fun removePlaylist(playlist: Playlist) {
-        playlists.remove(playlist)
-        adapter.updatePlaylists(playlists)
+        (activity as? MainActivity)?.getPlaylists()?.remove(playlist)
+        displayedPlaylists.remove(playlist)
+        adapter.notifyDataSetChanged()
         updateUI()
         Toast.makeText(context, "Playlist removed", Toast.LENGTH_SHORT).show()
     }

@@ -9,6 +9,9 @@ import android.database.Cursor
 import android.net.Uri
 import android.os.*
 import android.provider.MediaStore
+import android.text.Editable
+import android.text.TextWatcher
+import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.*
@@ -31,10 +34,15 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private var playIntent: Intent? = null
     private var musicBound = false
     private var songList = mutableListOf<Song>()
+    private var playlists = mutableListOf<Playlist>()
     private lateinit var seekBar: SeekBar
     private lateinit var btnPlayPause: ImageButton
     private val handler = Handler(Looper.getMainLooper())
     private var currentFragment: Fragment? = null
+
+    private lateinit var searchBarLayout: RelativeLayout
+    private lateinit var editSearch: EditText
+    private lateinit var btnCloseSearch: ImageButton
 
     private val musicConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName, service: IBinder) {
@@ -55,6 +63,12 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // Initial mock data if empty
+        if (playlists.isEmpty()) {
+            playlists.add(Playlist(1, "Hello"))
+            playlists.add(Playlist(2, "Favorites"))
+        }
+
         val toolbar: Toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
 
@@ -72,6 +86,10 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         btnPlayPause = findViewById(R.id.btn_play_pause)
         val btnPrev: ImageButton = findViewById(R.id.btn_prev)
         val btnNext: ImageButton = findViewById(R.id.btn_next)
+
+        searchBarLayout = findViewById(R.id.search_bar_layout)
+        editSearch = findViewById(R.id.edit_search)
+        btnCloseSearch = findViewById(R.id.btn_close_search)
 
         btnPlayPause.setOnClickListener {
             if (musicService?.isPng() == true) {
@@ -94,6 +112,18 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
 
+        btnCloseSearch.setOnClickListener {
+            hideSearchBar()
+        }
+
+        editSearch.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                performSearch(s.toString())
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
+
         if (savedInstanceState == null) {
             showFragment(HomeFragment(), "HOME")
         }
@@ -102,16 +132,74 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         startSeekBarUpdate()
     }
 
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        val fragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
+        val tag = fragment?.tag
+        if (tag == "HOME") {
+            menuInflater.inflate(R.menu.home_options, menu)
+            return true
+        } else if (tag == "PLAYLISTS") {
+            menuInflater.inflate(R.menu.playlists_options, menu)
+            return true
+        }
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        val fragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
+        when (item.itemId) {
+            R.id.action_search_songs, R.id.action_search_playlists -> {
+                showSearchBar()
+                return true
+            }
+            R.id.sort_name_asc -> (fragment as? Sortable)?.sortByName(true)
+            R.id.sort_name_desc -> (fragment as? Sortable)?.sortByName(false)
+            R.id.sort_newest -> (fragment as? Sortable)?.sortByDate(true)
+            R.id.sort_oldest -> (fragment as? Sortable)?.sortByDate(false)
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
+    private fun showSearchBar() {
+        searchBarLayout.visibility = View.VISIBLE
+        editSearch.requestFocus()
+    }
+
+    private fun hideSearchBar() {
+        searchBarLayout.visibility = View.GONE
+        editSearch.setText("")
+        performSearch("")
+    }
+
+    private fun performSearch(query: String) {
+        val fragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
+        (fragment as? Searchable)?.filter(query)
+    }
+
+    fun switchToPlaylists() {
+        showFragment(PlaylistsFragment(), "PLAYLISTS")
+        val navigationView: NavigationView = findViewById(R.id.nav_view)
+        navigationView.setCheckedItem(R.id.nav_view_playlists)
+    }
+
+    fun createPlaylist(name: String) {
+        val id = (playlists.maxByOrNull { it.id }?.id ?: 0) + 1
+        playlists.add(Playlist(id, name))
+    }
+
+    fun getPlaylists(): MutableList<Playlist> = playlists
+
     private fun showFragment(fragment: Fragment, tag: String) {
         currentFragment = fragment
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, fragment, tag)
             .commit()
         
-        // If it's the home fragment, we need to ensure it's populated
-        if (tag == "HOME") {
-            handler.post { updateHomeFragment() }
+        handler.post { 
+            if (tag == "HOME") updateHomeFragment()
+            invalidateOptionsMenu() 
         }
+        hideSearchBar()
     }
 
     private fun updateHomeFragment() {
@@ -182,15 +270,17 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             val pathColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DATA)
             val durationColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DURATION)
             val albumIdColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID)
+            val dateAddedColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DATE_ADDED)
 
             do {
                 val thisId = musicCursor.getLong(idColumn)
-                val thisTitle = musicCursor.getString(titleColumn)
-                val thisArtist = musicCursor.getString(artistColumn)
-                val thisPath = musicCursor.getString(pathColumn)
+                val thisTitle = musicCursor.getString(titleColumn) ?: "Unknown"
+                val thisArtist = musicCursor.getString(artistColumn) ?: "Unknown"
+                val thisPath = musicCursor.getString(pathColumn) ?: ""
                 val thisDuration = musicCursor.getLong(durationColumn)
                 val thisAlbumId = musicCursor.getLong(albumIdColumn)
-                songList.add(Song(thisId, thisTitle, thisArtist, thisPath, thisDuration, thisAlbumId))
+                val thisDateAdded = musicCursor.getLong(dateAddedColumn)
+                songList.add(Song(thisId, thisTitle, thisArtist, thisPath, thisDuration, thisAlbumId, thisDateAdded))
             } while (musicCursor.moveToNext())
         }
         musicCursor?.close()
@@ -244,9 +334,30 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 when (which) {
                     0 -> renameSong(song)
                     1 -> Toast.makeText(this, "Change image not implemented", Toast.LENGTH_SHORT).show()
-                    2 -> Toast.makeText(this, "Add to playlist not implemented", Toast.LENGTH_SHORT).show()
+                    2 -> addToPlaylist(song)
                     3 -> Toast.makeText(this, "Added to favorites", Toast.LENGTH_SHORT).show()
                     4 -> deleteSong(song)
+                }
+            }
+            .show()
+    }
+
+    private fun addToPlaylist(song: Song) {
+        if (playlists.isEmpty()) {
+            Toast.makeText(this, "No playlists found. Create one first.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val playlistNames = playlists.map { it.name }.toTypedArray()
+        AlertDialog.Builder(this)
+            .setTitle("Add '${song.title}' to:")
+            .setItems(playlistNames) { _, which ->
+                val selectedPlaylist = playlists[which]
+                if (!selectedPlaylist.songs.contains(song.id)) {
+                    selectedPlaylist.songs.add(song.id)
+                    Toast.makeText(this, "Added to ${selectedPlaylist.name}", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "Already in ${selectedPlaylist.name}", Toast.LENGTH_SHORT).show()
                 }
             }
             .show()
@@ -301,4 +412,13 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         musicService = null
         super.onDestroy()
     }
+}
+
+interface Searchable {
+    fun filter(query: String)
+}
+
+interface Sortable {
+    fun sortByName(ascending: Boolean)
+    fun sortByDate(newestFirst: Boolean)
 }
