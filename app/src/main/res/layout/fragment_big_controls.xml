@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#FFFFFF">
+
+    <!-- Top Area: Titles -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="32dp">
+
+        <TextView
+            android:id="@+id/big_song_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Song Title"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:gravity="center" />
+
+        <TextView
+            android:id="@+id/big_song_artist"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Artist Name"
+            android:textSize="20sp"
+            android:textColor="#666666"
+            android:layout_marginTop="12dp"
+            android:gravity="center" />
+    </LinearLayout>
+
+    <!-- Bottom Area: Gray Container with Controls -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#EEEEEE"
+        android:orientation="vertical"
+        android:paddingTop="40dp"
+        android:paddingBottom="60dp"
+        android:paddingLeft="24dp"
+        android:paddingRight="24dp">
+
+        <!-- Progress and Time -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="40dp">
+
+            <TextView
+                android:id="@+id/big_current_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="00:00"
+                android:textColor="#000000"
+                android:textSize="14sp" />
+
+            <SeekBar
+                android:id="@+id/big_seek_bar"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginHorizontal="12dp" />
+
+            <TextView
+                android:id="@+id/big_total_duration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="00:00"
+                android:textColor="#000000"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <!-- Media Controls -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/big_btn_prev"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:scaleType="fitCenter"
+                android:src="@android:drawable/ic_media_previous" />
+
+            <ImageButton
+                android:id="@+id/big_btn_play_pause"
+                android:layout_width="140dp"
+                android:layout_height="140dp"
+                android:layout_marginHorizontal="32dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:scaleType="fitCenter"
+                android:src="@android:drawable/ic_media_play" />
+
+            <ImageButton
+                android:id="@+id/big_btn_next"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:scaleType="fitCenter"
+                android:src="@android:drawable/ic_media_next" />
+
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>

@@ -40,6 +40,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private lateinit var txtCurrentTime: TextView
     private lateinit var txtTotalDuration: TextView
     private lateinit var btnPlayPause: ImageButton
+    private lateinit var controlPanel: View
     private val handler = Handler(Looper.getMainLooper())
     private var currentFragment: Fragment? = null
 
@@ -81,6 +82,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         val navigationView: NavigationView = findViewById(R.id.nav_view)
         navigationView.setNavigationItemSelectedListener(this)
 
+        controlPanel = findViewById(R.id.control_panel)
         seekBar = findViewById(R.id.seek_bar)
         txtCurrentTime = findViewById(R.id.txt_current_time)
         txtTotalDuration = findViewById(R.id.txt_total_duration)
@@ -180,6 +182,11 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 menuInflater.inflate(R.menu.playlist_songs_options, menu)
                 return true
             }
+            "BIG_CONTROLS" -> {
+                menu.add(0, 100, 0, "Add this music to playlist")
+                menu.add(0, 101, 0, "Add this music to favorite")
+                return true
+            }
         }
         return super.onCreateOptionsMenu(menu)
     }
@@ -199,6 +206,14 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             R.id.sort_name_desc -> (fragment as? Sortable)?.sortByName(false)
             R.id.sort_newest -> (fragment as? Sortable)?.sortByDate(true)
             R.id.sort_oldest -> (fragment as? Sortable)?.sortByDate(false)
+            100 -> { // Add to playlist from Big Controls
+                musicService?.getCurrentSong()?.let { addToPlaylist(it) }
+                return true
+            }
+            101 -> { // Add to favorite from Big Controls
+                Toast.makeText(this, "Added to favorites", Toast.LENGTH_SHORT).show()
+                return true
+            }
         }
         return super.onOptionsItemSelected(item)
     }
@@ -233,6 +248,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     fun getPlaylists(): MutableList<Playlist> = playlists
 
+    fun getMusicService(): MusicService? = musicService
+
     private fun showFragment(fragment: Fragment, tag: String) {
         currentFragment = fragment
         supportFragmentManager.beginTransaction()
@@ -242,6 +259,13 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         handler.post { 
             if (tag == "HOME") updateHomeFragment()
             invalidateOptionsMenu() 
+            
+            // Hide control panel when in Big Controls
+            if (tag == "BIG_CONTROLS") {
+                controlPanel.visibility = View.GONE
+            } else {
+                controlPanel.visibility = View.VISIBLE
+            }
         }
         hideSearchBar()
     }
@@ -314,6 +338,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         val musicUri: Uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
         val musicCursor: Cursor? = musicResolver.query(musicUri, null, null, null, null)
 
+        val artistOverrides = getSharedPreferences("artist_overrides", Context.MODE_PRIVATE)
+
         if (musicCursor != null && musicCursor.moveToFirst()) {
             val titleColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.TITLE)
             val idColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media._ID)
@@ -326,7 +352,11 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             do {
                 val thisId = musicCursor.getLong(idColumn)
                 val thisTitle = musicCursor.getString(titleColumn) ?: "Unknown"
-                val thisArtist = musicCursor.getString(artistColumn) ?: "Unknown"
+                var thisArtist = musicCursor.getString(artistColumn) ?: "Unknown"
+                
+                // Apply persistent override if exists
+                thisArtist = artistOverrides.getString(thisId.toString(), thisArtist) ?: thisArtist
+
                 val thisPath = musicCursor.getString(pathColumn) ?: ""
                 val thisDuration = musicCursor.getLong(durationColumn)
                 val thisAlbumId = musicCursor.getLong(albumIdColumn)
@@ -352,6 +382,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.nav_home -> showFragment(HomeFragment(), "HOME")
+            R.id.nav_big_controls -> showFragment(BigControlsFragment(), "BIG_CONTROLS")
             R.id.nav_create_playlist -> showFragment(CreatePlaylistFragment(), "CREATE_PLAYLIST")
             R.id.nav_view_playlists -> showFragment(PlaylistsFragment(), "PLAYLISTS")
             R.id.nav_rescan -> showFragment(RescanFragment(), "RESCAN")
@@ -382,25 +413,55 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
 
     private fun formatTime(millis: Long): String {
-        return String.format(Locale.getDefault(), "%02d:%02d",
+        return String.format(Locale.getDefault(), "%02d:%02d", 
             TimeUnit.MILLISECONDS.toMinutes(millis),
             TimeUnit.MILLISECONDS.toSeconds(millis) % TimeUnit.MINUTES.toSeconds(1)
         )
     }
 
     fun showSongOptions(song: Song) {
-        val options = arrayOf("Rename song", "Change song image", "Add to playlist", "Add to favorite", "Delete song")
+        val options = arrayOf("Rename song", "Change Artist name", "Add to playlist", "Add to favorite", "Delete song")
         AlertDialog.Builder(this)
             .setTitle(song.title)
             .setItems(options) { _, which ->
                 when (which) {
                     0 -> renameSong(song)
-                    1 -> Toast.makeText(this, "Change image not implemented", Toast.LENGTH_SHORT).show()
+                    1 -> changeArtistName(song)
                     2 -> addToPlaylist(song)
                     3 -> Toast.makeText(this, "Added to favorites", Toast.LENGTH_SHORT).show()
                     4 -> deleteSong(song)
                 }
             }
+            .show()
+    }
+
+    private fun changeArtistName(song: Song) {
+        val input = EditText(this)
+        input.setText(song.artist)
+        AlertDialog.Builder(this)
+            .setTitle("Change Artist Name")
+            .setView(input)
+            .setPositiveButton("OK") { _, _ ->
+                val newName = input.text.toString()
+                if (newName.isNotEmpty()) {
+                    // Save persistently
+                    val artistOverrides = getSharedPreferences("artist_overrides", Context.MODE_PRIVATE)
+                    artistOverrides.edit().putString(song.id.toString(), newName).commit()
+                    
+                    song.artist = newName
+                    // Update the song list in the service
+                    musicService?.setList(songList)
+                    // Refresh current fragment
+                    val fragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
+                    if (fragment is HomeFragment) {
+                        updateHomeFragment()
+                    } else if (fragment is PlaylistSongsFragment) {
+                        (fragment as? Searchable)?.filter("")
+                    }
+                    Toast.makeText(this, "Artist changed to $newName", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Cancel", null)
             .show()
     }
 

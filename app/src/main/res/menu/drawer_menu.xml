@@ -6,6 +6,10 @@
             android:icon="@android:drawable/ic_menu_today"
             android:title="@string/menu_home" />
         <item
+            android:id="@+id/nav_big_controls"
+            android:icon="@android:drawable/ic_media_play"
+            android:title="Big Controls" />
+        <item
             android:id="@+id/nav_create_playlist"
             android:icon="@android:drawable/ic_menu_add"
             android:title="@string/menu_create_playlist" />

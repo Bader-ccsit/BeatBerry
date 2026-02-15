@@ -241,6 +241,8 @@ class MusicService : Service(), MediaPlayer.OnPreparedListener, MediaPlayer.OnEr
         playSong()
     }
 
+    fun getCurrentSong(): Song? = songs?.getOrNull(songPos)
+
     private fun updatePlaybackState(state: Int) {
         val speed = if (state == PlaybackStateCompat.STATE_PLAYING) 1.0f else 0.0f
         val playbackState = PlaybackStateCompat.Builder()
