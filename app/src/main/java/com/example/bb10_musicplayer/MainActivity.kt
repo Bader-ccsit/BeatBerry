@@ -140,15 +140,28 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     private fun loadPlaylists() {
         val prefs = getSharedPreferences("playlists_prefs", Context.MODE_PRIVATE)
-        val playlistNames = prefs.getStringSet("playlist_names", null) ?: setOf("Hello", "Favorites")
+        val playlistNames = prefs.getStringSet("playlist_names", null) ?: setOf("Favorites")
         
         playlists.clear()
-        playlistNames.forEach { name ->
-            val id = prefs.getLong("playlist_id_$name", System.currentTimeMillis())
+        
+        // Ensure Favorites is always first
+        val sortedNames = playlistNames.toMutableList().sorted().toMutableList()
+        if (sortedNames.contains("Favorites")) {
+            sortedNames.remove("Favorites")
+            sortedNames.add(0, "Favorites")
+        }
+
+        sortedNames.forEach { name ->
+            val id = if (name == "Favorites") 0L else prefs.getLong("playlist_id_$name", System.currentTimeMillis())
             val songsStr = prefs.getString("playlist_songs_$name", "") ?: ""
             val songsList = if (songsStr.isEmpty()) mutableListOf<Long>() else songsStr.split(",").map { it.toLong() }.toMutableList()
             val dateCreated = prefs.getLong("playlist_date_$name", System.currentTimeMillis())
             playlists.add(Playlist(id, name, songsList, dateCreated))
+        }
+        
+        if (playlists.none { it.name == "Favorites" }) {
+            playlists.add(0, Playlist(0L, "Favorites", mutableListOf(), 0L))
+            savePlaylists()
         }
     }
 
@@ -211,7 +224,17 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 return true
             }
             101 -> { // Add to favorite from Big Controls
-                Toast.makeText(this, "Added to favorites", Toast.LENGTH_SHORT).show()
+                val favorites = playlists.find { it.name == "Favorites" }
+                val currentSong = musicService?.getCurrentSong()
+                if (favorites != null && currentSong != null) {
+                    if (!favorites.songs.contains(currentSong.id)) {
+                        favorites.songs.add(currentSong.id)
+                        savePlaylists()
+                        Toast.makeText(this, "Added to favorites", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(this, "Already in favorites", Toast.LENGTH_SHORT).show()
+                    }
+                }
                 return true
             }
         }
@@ -241,6 +264,10 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
 
     fun createPlaylist(name: String) {
+        if (name.equals("Favorites", ignoreCase = true)) {
+            Toast.makeText(this, "Cannot create a playlist named Favorites", Toast.LENGTH_SHORT).show()
+            return
+        }
         val id = (playlists.maxByOrNull { it.id }?.id ?: 0) + 1
         playlists.add(Playlist(id, name))
         savePlaylists()
@@ -428,7 +455,18 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                     0 -> renameSong(song)
                     1 -> changeArtistName(song)
                     2 -> addToPlaylist(song)
-                    3 -> Toast.makeText(this, "Added to favorites", Toast.LENGTH_SHORT).show()
+                    3 -> {
+                        val favorites = playlists.find { it.name == "Favorites" }
+                        if (favorites != null) {
+                            if (!favorites.songs.contains(song.id)) {
+                                favorites.songs.add(song.id)
+                                savePlaylists()
+                                Toast.makeText(this, "Added to favorites", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(this, "Already in favorites", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
                     4 -> deleteSong(song)
                 }
             }
@@ -466,16 +504,18 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
 
     private fun addToPlaylist(song: Song) {
-        if (playlists.isEmpty()) {
-            Toast.makeText(this, "No playlists found. Create one first.", Toast.LENGTH_SHORT).show()
+        if (playlists.size <= 1) { // Only Favorites exists
+            Toast.makeText(this, "No other playlists found. Create one first.", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val playlistNames = playlists.map { it.name }.toTypedArray()
+        val otherPlaylists = playlists.filter { it.name != "Favorites" }
+        val playlistNames = otherPlaylists.map { it.name }.toTypedArray()
+        
         AlertDialog.Builder(this)
             .setTitle("Add '${song.title}' to:")
             .setItems(playlistNames) { _, which ->
-                val selectedPlaylist = playlists[which]
+                val selectedPlaylist = otherPlaylists[which]
                 if (!selectedPlaylist.songs.contains(song.id)) {
                     selectedPlaylist.songs.add(song.id)
                     savePlaylists()

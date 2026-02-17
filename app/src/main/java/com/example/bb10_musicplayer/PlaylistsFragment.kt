@@ -60,13 +60,17 @@ class PlaylistsFragment : Fragment(), Searchable, Sortable {
         val allPlaylists = (activity as? MainActivity)?.getPlaylists() ?: mutableListOf()
         val lowerCaseQuery = query.toLowerCase(Locale.getDefault())
         displayedPlaylists.clear()
-        if (lowerCaseQuery.isEmpty()) {
-            displayedPlaylists.addAll(allPlaylists)
-        } else {
-            for (playlist in allPlaylists) {
-                if (playlist.name.toLowerCase(Locale.getDefault()).contains(lowerCaseQuery)) {
-                    displayedPlaylists.add(playlist)
-                }
+        
+        // Always keep Favorites at the top if it matches or if search is empty
+        val favorites = allPlaylists.find { it.name == "Favorites" }
+        if (favorites != null && (lowerCaseQuery.isEmpty() || favorites.name.toLowerCase(Locale.getDefault()).contains(lowerCaseQuery))) {
+            displayedPlaylists.add(favorites)
+        }
+
+        for (playlist in allPlaylists) {
+            if (playlist.name == "Favorites") continue
+            if (playlist.name.toLowerCase(Locale.getDefault()).contains(lowerCaseQuery)) {
+                displayedPlaylists.add(playlist)
             }
         }
         adapter.notifyDataSetChanged()
@@ -74,38 +78,65 @@ class PlaylistsFragment : Fragment(), Searchable, Sortable {
     }
 
     override fun sortByName(ascending: Boolean) {
+        val favorites = displayedPlaylists.find { it.name == "Favorites" }
+        val others = displayedPlaylists.filter { it.name != "Favorites" }.toMutableList()
+        
         if (ascending) {
-            displayedPlaylists.sortBy { it.name.toLowerCase(Locale.getDefault()) }
+            others.sortBy { it.name.toLowerCase(Locale.getDefault()) }
         } else {
-            displayedPlaylists.sortByDescending { it.name.toLowerCase(Locale.getDefault()) }
+            others.sortByDescending { it.name.toLowerCase(Locale.getDefault()) }
         }
+        
+        displayedPlaylists.clear()
+        favorites?.let { displayedPlaylists.add(it) }
+        displayedPlaylists.addAll(others)
         adapter.notifyDataSetChanged()
     }
 
     override fun sortByDate(newestFirst: Boolean) {
+        val favorites = displayedPlaylists.find { it.name == "Favorites" }
+        val others = displayedPlaylists.filter { it.name != "Favorites" }.toMutableList()
+
         if (newestFirst) {
-            displayedPlaylists.sortByDescending { it.dateCreated }
+            others.sortByDescending { it.dateCreated }
         } else {
-            displayedPlaylists.sortBy { it.dateCreated }
+            others.sortBy { it.dateCreated }
         }
+
+        displayedPlaylists.clear()
+        favorites?.let { displayedPlaylists.add(it) }
+        displayedPlaylists.addAll(others)
         adapter.notifyDataSetChanged()
     }
 
     private fun showPlaylistOptions(playlist: Playlist) {
-        val options = arrayOf("Remove playlist", "Rename playlist", "Details")
+        val options = if (playlist.name == "Favorites") {
+            arrayOf("Rename playlist", "Details")
+        } else {
+            arrayOf("Remove playlist", "Rename playlist", "Details")
+        }
+
         AlertDialog.Builder(context)
             .setTitle(playlist.name)
             .setItems(options) { _, which ->
-                when (which) {
-                    0 -> removePlaylist(playlist)
-                    1 -> renamePlaylist(playlist)
-                    2 -> showPlaylistDetails(playlist)
+                if (playlist.name == "Favorites") {
+                    when (which) {
+                        0 -> renamePlaylist(playlist)
+                        1 -> showPlaylistDetails(playlist)
+                    }
+                } else {
+                    when (which) {
+                        0 -> removePlaylist(playlist)
+                        1 -> renamePlaylist(playlist)
+                        2 -> showPlaylistDetails(playlist)
+                    }
                 }
             }
             .show()
     }
 
     private fun removePlaylist(playlist: Playlist) {
+        if (playlist.name == "Favorites") return
         (activity as? MainActivity)?.getPlaylists()?.remove(playlist)
         displayedPlaylists.remove(playlist)
         adapter.notifyDataSetChanged()
@@ -122,8 +153,12 @@ class PlaylistsFragment : Fragment(), Searchable, Sortable {
             .setPositiveButton("OK") { _, _ ->
                 val newName = input.text.toString()
                 if (newName.isNotEmpty()) {
-                    playlist.name = newName
-                    adapter.notifyDataSetChanged()
+                    if (playlist.name == "Favorites") {
+                        Toast.makeText(context, "Cannot rename Favorites playlist", Toast.LENGTH_SHORT).show()
+                    } else {
+                        playlist.name = newName
+                        adapter.notifyDataSetChanged()
+                    }
                 }
             }
             .setNegativeButton("Cancel", null)
