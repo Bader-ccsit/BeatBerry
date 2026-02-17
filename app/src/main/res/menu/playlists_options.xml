@@ -3,25 +3,25 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/action_search_playlists"
-        android:title="Search for a playlist"
+        android:title="@string/action_search_playlists"
         app:showAsAction="never" />
     <item
         android:id="@+id/action_sort"
-        android:title="Sort the playlists"
+        android:title="@string/action_sort_playlists"
         app:showAsAction="never">
         <menu>
             <item
                 android:id="@+id/sort_name_asc"
-                android:title="Name Ascending" />
+                android:title="@string/sort_name_asc" />
             <item
                 android:id="@+id/sort_name_desc"
-                android:title="Name Descending" />
+                android:title="@string/sort_name_desc" />
             <item
                 android:id="@+id/sort_newest"
-                android:title="Newly Created" />
+                android:title="@string/sort_newly_created" />
             <item
                 android:id="@+id/sort_oldest"
-                android:title="Oldest Created" />
+                android:title="@string/sort_oldest_created" />
         </menu>
     </item>
 </menu>

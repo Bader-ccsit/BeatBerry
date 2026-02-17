@@ -196,8 +196,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 return true
             }
             "BIG_CONTROLS" -> {
-                menu.add(0, 100, 0, "Add this music to playlist")
-                menu.add(0, 101, 0, "Add this music to favorite")
+                menu.add(0, 100, 0, getString(R.string.action_add_to_playlist))
+                menu.add(0, 101, 0, getString(R.string.action_add_to_favorite))
                 return true
             }
         }
@@ -230,7 +230,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                     if (!favorites.songs.contains(currentSong.id)) {
                         favorites.songs.add(currentSong.id)
                         savePlaylists()
-                        Toast.makeText(this, "Added to favorites", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, getString(R.string.action_add_to_favorite), Toast.LENGTH_SHORT).show()
                     } else {
                         Toast.makeText(this, "Already in favorites", Toast.LENGTH_SHORT).show()
                     }
@@ -324,11 +324,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     private fun applySettings() {
         val prefs = getSharedPreferences("settings", Context.MODE_PRIVATE)
-        val isDarkMode = prefs.getBoolean("dark_mode", false)
-        AppCompatDelegate.setDefaultNightMode(
-            if (isDarkMode) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
-        )
-
         val lang = prefs.getString("lang", "en") ?: "en"
         val locale = Locale(lang)
         Locale.setDefault(locale)
@@ -461,7 +456,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                             if (!favorites.songs.contains(song.id)) {
                                 favorites.songs.add(song.id)
                                 savePlaylists()
-                                Toast.makeText(this, "Added to favorites", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(this, getString(R.string.action_add_to_favorite), Toast.LENGTH_SHORT).show()
                             } else {
                                 Toast.makeText(this, "Already in favorites", Toast.LENGTH_SHORT).show()
                             }

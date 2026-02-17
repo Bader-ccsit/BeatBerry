@@ -8,8 +8,6 @@ import android.widget.Button
 import android.widget.RadioGroup
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.appcompat.widget.SwitchCompat
 import java.util.Locale
 
 class SettingsActivity : AppCompatActivity() {
@@ -23,21 +21,8 @@ class SettingsActivity : AppCompatActivity() {
         setContentView(R.layout.activity_settings)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        val switchDarkMode: SwitchCompat = findViewById(R.id.switch_dark_mode)
         val radioGroupLang: RadioGroup = findViewById(R.id.radio_group_lang)
         val btnClearCache: Button = findViewById(R.id.btn_clear_cache)
-
-        // Dark mode logic
-        val isDarkMode = prefs.getBoolean("dark_mode", false)
-        switchDarkMode.isChecked = isDarkMode
-        switchDarkMode.setOnCheckedChangeListener { _, isChecked ->
-            prefs.edit().putBoolean("dark_mode", isChecked).apply()
-            if (isChecked) {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-            } else {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-            }
-        }
 
         // Language logic
         if (lang == "ar") {

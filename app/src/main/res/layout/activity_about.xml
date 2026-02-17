@@ -57,5 +57,15 @@
             android:textSize="12sp"
             android:textColor="#000000" />
 
+        <TextView
+            android:id="@+id/about_github_link"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:text="@string/about_github"
+            android:textSize="12sp"
+            android:textColor="#0000EE" />
+
     </LinearLayout>
 </ScrollView>

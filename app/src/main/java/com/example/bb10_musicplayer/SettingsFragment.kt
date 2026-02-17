@@ -10,8 +10,6 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.RadioGroup
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.appcompat.widget.SwitchCompat
 import androidx.fragment.app.Fragment
 import java.util.Locale
 
@@ -20,23 +18,10 @@ class SettingsFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val view = inflater.inflate(R.layout.activity_settings, container, false)
         
-        val switchDarkMode: SwitchCompat = view.findViewById(R.id.switch_dark_mode)
         val radioGroupLang: RadioGroup = view.findViewById(R.id.radio_group_lang)
         val btnClearCache: Button = view.findViewById(R.id.btn_clear_cache)
 
         val prefs = requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE)
-
-        // Dark mode logic
-        val isDarkMode = prefs.getBoolean("dark_mode", false)
-        switchDarkMode.isChecked = isDarkMode
-        switchDarkMode.setOnCheckedChangeListener { _, isChecked ->
-            prefs.edit().putBoolean("dark_mode", isChecked).apply()
-            if (isChecked) {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-            } else {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-            }
-        }
 
         // Language logic
         val lang = prefs.getString("lang", "en") ?: "en"

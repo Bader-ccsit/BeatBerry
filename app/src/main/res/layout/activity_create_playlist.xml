@@ -27,6 +27,8 @@
             android:layout_marginTop="32dp"
             android:hint="@string/playlist_name_hint"
             android:inputType="textCapWords"
+            android:textColor="#000000"
+            android:textColorHint="#666666"
             android:imeOptions="actionDone" />
 
         <Button

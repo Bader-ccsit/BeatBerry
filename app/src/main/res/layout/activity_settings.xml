@@ -3,47 +3,49 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp">
-
-    <androidx.appcompat.widget.SwitchCompat
-        android:id="@+id/switch_dark_mode"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="16dp"
-        android:text="@string/settings_dark_mode" />
+    android:padding="16dp"
+    android:background="#FFFFFF">
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="16dp"
         android:text="@string/settings_language"
-        android:textSize="16sp" />
+        android:textColor="#000000"
+        android:textSize="18sp"
+        android:textStyle="bold" />
 
     <RadioGroup
         android:id="@+id/radio_group_lang"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingLeft="16dp"
-        android:paddingRight="16dp">
+        android:paddingRight="16dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
 
         <RadioButton
             android:id="@+id/radio_en"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="English" />
+            android:text="English"
+            android:textColor="#000000" />
 
         <RadioButton
             android:id="@+id/radio_ar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="العربية" />
+            android:text="العربية"
+            android:textColor="#000000" />
     </RadioGroup>
 
     <Button
         android:id="@+id/btn_clear_cache"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="@string/settings_clear_cache" />
+        android:layout_marginTop="32dp"
+        android:text="@string/settings_clear_cache"
+        android:backgroundTint="#6200EE"
+        android:textColor="#FFFFFF" />
 
 </LinearLayout>

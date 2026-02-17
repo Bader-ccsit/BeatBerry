@@ -7,12 +7,12 @@
     <string name="menu_rescan">إعادة فحص الموسيقى</string>
     <string name="menu_settings">الإعدادات</string>
     <string name="menu_about">حول التطبيق</string>
-    <string name="settings_dark_mode">الوضع الداكن</string>
     <string name="settings_language">اللغة</string>
     <string name="settings_clear_cache">مسح ذاكرة التخزين المؤقت</string>
     <string name="about_created_by">تم التطوير بكل حب بواسطة المهندس ميهاوك/بدر 👨🏻‍💻🤍</string>
     <string name="about_location">صنع في المملكة العربية السعودية، الأحساء 🇸🇦🌴</string>
     <string name="about_version">الإصدار 1.0</string>
+    <string name="about_github">لمزيد من المشاريع الرائعة مثل هذا، قم بزيارة صفحة Github الخاصة بي</string>
     <string name="rescan_message">جاري البحث عن موسيقى...</string>
     <string name="btn_start_scanning">بدء الفحص</string>
     <string name="btn_manual_add">إضافة يدوياً</string>
@@ -20,4 +20,23 @@
     <string name="btn_create">إنشاء</string>
     <string name="rescan_title">إعادة فحص الموسيقى</string>
     <string name="create_playlist_title">إنشاء قائمة تشغيل جديدة</string>
+
+    <!-- Option Menus -->
+    <string name="action_search_songs">البحث عن أغنية</string>
+    <string name="action_search_playlists">البحث عن قائمة تشغيل</string>
+    <string name="action_search_playlist_songs">البحث عن موسيقى</string>
+    <string name="action_sort_songs">ترتيب الأغاني</string>
+    <string name="action_sort_playlists">ترتيب قوائم التشغيل</string>
+    <string name="action_rearrange_music">إعادة ترتيب الموسيقى</string>
+
+    <string name="sort_name_asc">الاسم (أ-ي)</string>
+    <string name="sort_name_desc">الاسم (ي-أ)</string>
+    <string name="sort_newly_added">أضيف حديثاً</string>
+    <string name="sort_oldest_added">الأقدم</string>
+    <string name="sort_newly_created">أنشئ حديثاً</string>
+    <string name="sort_oldest_created">الأقدم إنشاءً</string>
+
+    <string name="btn_add_songs">إضافة موسيقى</string>
+    <string name="action_add_to_playlist">إضافة هذه الموسيقى إلى قائمة تشغيل</string>
+    <string name="action_add_to_favorite">إضافة هذه الموسيقى إلى المفضلة</string>
 </resources>

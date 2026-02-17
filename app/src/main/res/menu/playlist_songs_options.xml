@@ -3,10 +3,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/action_search_playlist_songs"
-        android:title="Search for music"
+        android:title="@string/action_search_playlist_songs"
         app:showAsAction="never" />
     <item
         android:id="@+id/action_rearrange_playlist"
-        android:title="Re-arange the music"
+        android:title="@string/action_rearrange_music"
         app:showAsAction="never" />
 </menu>
